@@ -3,7 +3,7 @@ import React from 'react';
 import { useFileRenamer } from '../context/FileRenamerContext';
 
 export default function FileItem({ file }) {
-  const { setFiles, theme } = useFileRenamer();
+  const { setFiles } = useFileRenamer();
 
   const toggleSelected = () => {
     setFiles(prev => prev.map(f => f.name === file.name ? { ...f, selected: !f.selected } : f));
@@ -24,7 +24,7 @@ export default function FileItem({ file }) {
   };
 
   return (
-    <div className={`p-4 rounded-lg border transition ${theme === 'dark' ? 'border-gray-800 hover:bg-white/5' : 'border-gray-200 hover:bg-black/5'}`}>
+    <div className="p-4 rounded-lg border transition border-gray-200 dark:border-gray-800 hover:bg-black/5 dark:hover:bg-white/5">
       <div className="flex items-center gap-3">
         <input type="checkbox" checked={file.selected} onChange={toggleSelected} className="w-4 h-4" />
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">

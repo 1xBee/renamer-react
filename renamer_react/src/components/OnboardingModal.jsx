@@ -3,7 +3,7 @@ import React from 'react';
 import { useFileRenamer } from '../context/FileRenamerContext';
 
 export default function OnboardingModal() {
-  const { onboarding, setOnboarding, theme } = useFileRenamer();
+  const { onboarding, setOnboarding } = useFileRenamer();
 
   if (!onboarding.visible) return null;
 
@@ -49,11 +49,9 @@ export default function OnboardingModal() {
     localStorage.setItem('hasSeenOnboarding', 'true');
   };
 
-  const cardClass = theme === 'dark' ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200';
-
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className={`${cardClass} max-w-lg w-11/12 p-8 rounded-2xl text-center`}>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 max-w-lg w-11/12 p-8 rounded-2xl text-center">
         <div className="text-6xl mb-4">{steps[onboarding.currentStep].icon}</div>
         <h3 className="text-2xl font-bold mb-3">{steps[onboarding.currentStep].title}</h3>
         <p className="opacity-70 leading-relaxed mb-6">{steps[onboarding.currentStep].content}</p>

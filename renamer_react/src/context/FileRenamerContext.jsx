@@ -1,5 +1,5 @@
 // ===== context/FileRenamerContext.jsx =====
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 const FileRenamerContext = createContext();
 
@@ -10,7 +10,8 @@ export const useFileRenamer = () => {
 };
 
 export const FileRenamerProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light');
+  const isInitializedRef = useRef(false);
+  const [theme, setTheme] = useState('dark');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [folderName, setFolderName] = useState('');
@@ -39,39 +40,70 @@ export const FileRenamerProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem('aiFileRenamerPro');
-    if (stored) {
-      const data = JSON.parse(stored);
-      setTheme(data.theme || 'light');
-      setApiKeys(data.apiKeys || {});
-      setPrompts(data.prompts || {});
-      setConfig(prev => ({
-        ...prev,
-        selectedModel: data.selectedModel || 'gemini-2.0-flash-exp',
-        customPrompt: data.customPrompt || ''
-      }));
-    }
-    
-    if (Object.keys(prompts).length === 0) {
-      setPrompts({
-        'Invoice Renamer': 'Extract the invoice number and date from this document. Format the filename as: INV[NUMBER]_[YYYYMMDD]',
-        'Receipt Organizer': 'Find the store name and purchase date. Format as: [STORE]_[YYYYMMDD]',
-        'Delivery Tracker': 'Locate the delivery number and date. Format as: [YYYYMMDD]_delivery_[NUMBER]',
-        'Contract Documents': 'Extract client/company name and contract date. Format as: Contract_[NAME]_[YYYYMMDD]',
-        'Medical Records': 'Find patient name and document date. Format as: [LASTNAME]_[FIRSTNAME]_[YYYYMMDD]'
-      });
-    }
-
-    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-    if (!hasSeenOnboarding) {
-      setTimeout(() => setOnboarding({ visible: true, currentStep: 0 }), 500);
-    }
-  }, []);
+    document.body.className = theme;
+  }, [theme]);
 
   useEffect(() => {
-    const data = { theme, apiKeys, prompts, selectedModel: config.selectedModel, customPrompt: config.customPrompt };
+    const defaultPrompts = {
+      'Invoice Renamer': 'Extract the invoice number and date from this document. Format the filename as: INV[NUMBER]_[YYYYMMDD]',
+      'Receipt Organizer': 'Find the store name and purchase date. Format as: [STORE]_[YYYYMMDD]',
+      'Delivery Tracker': 'Locate the delivery number and date. Format as: [YYYYMMDD]_delivery_[NUMBER]',
+      'Contract Documents': 'Extract client/company name and contract date. Format as: Contract_[NAME]_[YYYYMMDD]',
+      'Medical Records': 'Find patient name and document date. Format as: [LASTNAME]_[FIRSTNAME]_[YYYYMMDD]'
+    };
+
+    try {
+      const storedRaw = localStorage.getItem('aiFileRenamerPro');
+      // console.log('[FileRenamer] LOADING from localStorage:', storedRaw);
+      
+      if (storedRaw) {
+        const data = JSON.parse(storedRaw);
+        setTheme(data.theme || 'dark');
+        setApiKeys(data.apiKeys || {});
+        setPrompts(data.prompts && Object.keys(data.prompts).length ? data.prompts : defaultPrompts);
+        
+        // Update entire config object at once
+        setConfig(prev => ({
+          selectedModel: data.selectedModel || 'gemini-2.0-flash-exp',
+          selectedApiKey: data.selectedApiKey || '',
+          selectedPrompt: data.selectedPrompt || '',
+          customPrompt: data.customPrompt || ''
+        }));
+      } else {
+        setPrompts(defaultPrompts);
+      }
+    } catch (err) {
+      console.error('[FileRenamer] Error loading:', err);
+      setPrompts(defaultPrompts);
+    }
+
+    // Mark as initialized AFTER state updates
+    setTimeout(() => {
+      isInitializedRef.current = true;
+      // console.log('[FileRenamer] Initialization complete');
+    }, 0);
+  }, []);
+
+  // Update the save effect:
+  useEffect(() => {
+    if (!isInitializedRef.current) {
+      // console.log('[FileRenamer] Skipping save - not initialized');
+      return;
+    }
+
+    const data = {
+      theme,
+      apiKeys,
+      prompts,
+      selectedModel: config.selectedModel,
+      selectedApiKey: config.selectedApiKey,
+      selectedPrompt: config.selectedPrompt,
+      customPrompt: config.customPrompt
+    };
+
+    // console.log('[FileRenamer] SAVING to localStorage:', data);
     localStorage.setItem('aiFileRenamerPro', JSON.stringify(data));
-  }, [theme, apiKeys, prompts, config.selectedModel, config.customPrompt]);
+  }, [theme, apiKeys, prompts, config]); // Watch entire config object
 
   const showNotification = (message, type = 'info') => {
     setNotification({ visible: true, message, type });

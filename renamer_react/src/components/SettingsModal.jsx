@@ -4,7 +4,7 @@ import { Settings, Key, Edit3, Plus, Edit2, Trash2, CheckSquare } from 'lucide-r
 import { useFileRenamer } from '../context/FileRenamerContext';
 
 export default function SettingsModal() {
-  const { settingsOpen, setSettingsOpen, apiKeys, setApiKeys, prompts, setPrompts, showNotification, theme, config, setConfig } = useFileRenamer();
+  const { settingsOpen, setSettingsOpen, apiKeys, setApiKeys, prompts, setPrompts, showNotification, config, setConfig } = useFileRenamer();
   const [newApiKey, setNewApiKey] = useState({ name: '', value: '' });
   const [newPrompt, setNewPrompt] = useState({ name: '', value: '' });
 
@@ -53,12 +53,9 @@ export default function SettingsModal() {
     setSettingsOpen(false);
   };
 
-  const cardClass = theme === 'dark' ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200';
-  const inputClass = theme === 'dark' ? 'bg-black border-gray-700 text-white' : 'bg-white border-gray-300';
-
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className={`${cardClass} p-8 rounded-xl max-w-2xl w-11/12 mx-4 max-h-[80vh] overflow-y-auto`}>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-8 rounded-xl max-w-2xl w-11/12 mx-4 max-h-[80vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Settings size={24} />
@@ -75,7 +72,7 @@ export default function SettingsModal() {
             </h3>
             <div className="space-y-2 mb-3">
               {Object.keys(apiKeys).map(name => (
-                <div key={name} className={`flex items-center justify-between p-3 rounded-lg border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'}`}>
+                <div key={name} className="flex items-center justify-between p-3 rounded-lg border border-gray-300 dark:border-gray-700">
                   <span className="font-medium">{name}</span>
                   <div className="flex gap-2">
                     <button onClick={() => editApiKey(name)} className="text-blue-500 hover:text-blue-600">
@@ -89,8 +86,8 @@ export default function SettingsModal() {
               ))}
             </div>
             <div className="flex gap-2 flex-col sm:flex-row">
-              <input value={newApiKey.name} onChange={(e) => setNewApiKey(prev => ({ ...prev, name: e.target.value }))} type="text" placeholder="Key name..." className={`flex-1 px-3 py-2 rounded-lg border ${inputClass}`} />
-              <input value={newApiKey.value} onChange={(e) => setNewApiKey(prev => ({ ...prev, value: e.target.value }))} type="password" placeholder="API key..." className={`flex-1 px-3 py-2 rounded-lg border ${inputClass}`} />
+              <input value={newApiKey.name} onChange={(e) => setNewApiKey(prev => ({ ...prev, name: e.target.value }))} type="text" placeholder="Key name..." className="flex-1 px-3 py-2 rounded-lg border bg-white dark:bg-black border-gray-300 dark:border-gray-700 dark:text-white" />
+              <input value={newApiKey.value} onChange={(e) => setNewApiKey(prev => ({ ...prev, value: e.target.value }))} type="password" placeholder="API key..." className="flex-1 px-3 py-2 rounded-lg border bg-white dark:bg-black border-gray-300 dark:border-gray-700 dark:text-white" />
               <button onClick={addApiKey} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
                 <Plus size={20} />
               </button>
@@ -104,7 +101,7 @@ export default function SettingsModal() {
             </h3>
             <div className="space-y-2 mb-3">
               {Object.keys(prompts).map(name => (
-                <div key={name} className={`flex items-center justify-between p-3 rounded-lg border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'}`}>
+                <div key={name} className="flex items-center justify-between p-3 rounded-lg border border-gray-300 dark:border-gray-700">
                   <span className="font-medium">{name}</span>
                   <div className="flex gap-2">
                     <button onClick={() => usePrompt(name)} className="text-blue-500 hover:text-blue-600">
@@ -121,8 +118,8 @@ export default function SettingsModal() {
               ))}
             </div>
             <div className="space-y-2">
-              <input value={newPrompt.name} onChange={(e) => setNewPrompt(prev => ({ ...prev, name: e.target.value }))} type="text" placeholder="Prompt name..." className={`w-full px-3 py-2 rounded-lg border ${inputClass}`} />
-              <textarea value={newPrompt.value} onChange={(e) => setNewPrompt(prev => ({ ...prev, value: e.target.value }))} rows="4" placeholder="Prompt text..." className={`w-full px-3 py-2 rounded-lg border ${inputClass} resize-none`} />
+              <input value={newPrompt.name} onChange={(e) => setNewPrompt(prev => ({ ...prev, name: e.target.value }))} type="text" placeholder="Prompt name..." className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-black border-gray-300 dark:border-gray-700 dark:text-white" />
+              <textarea value={newPrompt.value} onChange={(e) => setNewPrompt(prev => ({ ...prev, value: e.target.value }))} rows="4" placeholder="Prompt text..." className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-black border-gray-300 dark:border-gray-700 dark:text-white resize-none" />
               <button onClick={addPrompt} className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center justify-center gap-2">
                 <Plus size={20} />
                 Add Prompt

@@ -4,11 +4,9 @@ import { AlertTriangle } from 'lucide-react';
 import { useFileRenamer } from '../context/FileRenamerContext';
 
 export default function ConfirmDialog() {
-  const { confirmDialog, setConfirmDialog, theme } = useFileRenamer();
+  const { confirmDialog, setConfirmDialog } = useFileRenamer();
 
   if (!confirmDialog.visible) return null;
-
-  const cardClass = theme === 'dark' ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200';
 
   const handleConfirm = () => {
     if (confirmDialog.callback) confirmDialog.callback();
@@ -17,7 +15,7 @@ export default function ConfirmDialog() {
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className={`${cardClass} p-8 rounded-xl max-w-md w-11/12 mx-4`}>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-8 rounded-xl max-w-md w-11/12 mx-4">
         <div className="flex items-center gap-3 mb-4">
           <AlertTriangle className="text-yellow-500" size={32} />
           <h2 className="text-2xl font-bold">Confirm Rename</h2>

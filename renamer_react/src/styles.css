@@ -1,0 +1,252 @@
+/* ===== BASE STYLES ===== */
+body {
+    /*overflow: hidden;*/
+    font-family: 'Inter', sans-serif;
+}
+
+body.dark {
+    background: linear-gradient(to bottom, #000000, #0a0a0a);
+    color: #fafafa;
+}
+
+body.light {
+    background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+    color: #1e293b;
+}
+
+/* ===== CARD COMPONENT ===== */
+.card {
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.dark .card {
+    background: rgba(26, 26, 26, 0.8);
+    border: 1px solid #333333;
+}
+
+.light .card {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dark .card:hover {
+    border-color: #444444;
+}
+
+.light .card:hover {
+    border-color: #cbd5e1;
+}
+
+/* ===== TOP RIBBON ===== */
+.top-ribbon {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    backdrop-filter: blur(10px);
+}
+
+.dark .top-ribbon {
+    background: rgba(10, 10, 10, 0.95);
+    border-bottom: 1px solid #333333;
+}
+
+.light .top-ribbon {
+    background: rgba(248, 250, 252, 0.95);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* ===== INPUT FIELDS ===== */
+.input-field:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark .input-field {
+    background: #000000;
+    border-color: #333333;
+    color: #fafafa;
+}
+
+.light .input-field {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    color: #1e293b;
+}
+
+/* ===== FILE ITEM ===== */
+.file-item {
+    transition: all 0.2s ease;
+}
+
+.dark .file-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.light .file-item:hover {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar {
+    height: 4px;
+    background: #374151;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    transition: width 0.3s ease;
+}
+
+/* ===== PROGRESS ANIMATION ===== */
+.progress-animation {
+    animation: slideRight 1.5s ease-in-out infinite;
+}
+
+@keyframes slideRight {
+    0%, 100% { 
+        transform: translateX(-100%); 
+    }
+    50% { 
+        transform: translateX(100%); 
+    }
+}
+
+/* ===== DROP ZONE ===== */
+.drop-zone {
+    border: 2px dashed #4b5563;
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.drop-zone:hover {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.drop-zone.dragover {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* ===== TOOLTIP ===== */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    background-color: #1f2937;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 100;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    width: 200px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1f2937 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ===== ONBOARDING CARD ===== */
+.onboarding-card {
+    animation: fadeInScale 0.3s ease;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1023px) {
+    /* Mobile sidebar slides in from left */
+    .mobile-sidebar {
+        position: fixed;
+        top: 72px;
+        left: 0;
+        bottom: 0;
+        width: 320px;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 50;
+        overflow-y: auto;
+    }
+    
+    .mobile-sidebar.open {
+        transform: translateX(0);
+    }
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+.dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #444444;
+}
+
+.light ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.light ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.light ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}

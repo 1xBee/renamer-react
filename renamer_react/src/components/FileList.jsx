@@ -5,14 +5,12 @@ import { useFileRenamer } from '../context/FileRenamerContext';
 import FileItem from './FileItem';
 
 export default function FileList() {
-  const { files, setFiles, theme } = useFileRenamer();
-  const cardClass = theme === 'dark' ? 'bg-gray-900/80 border border-gray-800' : 'bg-white/95 border border-gray-200 shadow-sm';
-
+  const { files, setFiles } = useFileRenamer();
   const selectAll = () => setFiles(prev => prev.map(f => ({ ...f, selected: true })));
   const clearAll = () => setFiles(prev => prev.map(f => ({ ...f, selected: false })));
 
   return (
-    <div className={`${cardClass} p-6 rounded-xl`}>
+    <div className="bg-white/95 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow-sm p-6 rounded-xl">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="flex gap-2">
           <button onClick={selectAll} className="px-3 py-1 text-sm rounded-lg border border-gray-700 hover:bg-gray-700 transition">Select All</button>

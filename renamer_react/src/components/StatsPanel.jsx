@@ -4,11 +4,10 @@ import { BarChart2 } from 'lucide-react';
 import { useFileRenamer } from '../context/FileRenamerContext';
 
 export default function StatsPanel() {
-  const { stats, theme } = useFileRenamer();
-  const cardClass = theme === 'dark' ? 'bg-gray-900/80 border border-gray-800 backdrop-blur-md' : 'bg-white/95 border border-gray-200 shadow-sm backdrop-blur-md';
+  const { stats } = useFileRenamer();
 
   return (
-    <div className={`${cardClass} p-6 rounded-xl`}>
+    <div className="bg-white/95 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 shadow-sm backdrop-blur-md p-6 rounded-xl">
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
         <BarChart2 size={20} />
         Statistics

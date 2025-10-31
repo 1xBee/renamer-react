@@ -1,5 +1,6 @@
 // ===== components/Toast.jsx =====
 import React from 'react';
+import { CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
 import { useFileRenamer } from '../context/FileRenamerContext';
 
 export default function Toast() {
@@ -15,15 +16,15 @@ export default function Toast() {
   };
 
   const icons = {
-    success: '✓',
-    error: '✗',
-    warning: '⚠',
-    info: 'ℹ'
-  };
+    success: <CheckCircle size={24} />,
+    error: <XCircle size={24} />,
+    warning: <AlertTriangle size={24} />,
+    info: <Info size={24} />
+  };  
 
   return (
     <div className={`fixed top-20 right-6 ${colors[notification.type]} text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 z-50`}>
-      <span className="text-2xl">{icons[notification.type]}</span>
+      {icons[notification.type]}
       <span>{notification.message}</span>
     </div>
   );
