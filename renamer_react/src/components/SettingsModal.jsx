@@ -75,11 +75,11 @@ export default function SettingsModal() {
                 <div key={name} className="flex items-center justify-between p-3 rounded-lg border border-gray-300 dark:border-gray-700">
                   <span className="font-medium">{name}</span>
                   <div className="flex gap-2">
-                    <button onClick={() => editApiKey(name)} className="text-blue-500 hover:text-blue-600">
+                    <button onClick={() => editApiKey(name)} className="text-blue-500 hover:text-blue-600" title="Edit this key">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => deleteApiKey(name)} className="text-red-500 hover:text-red-600">
-                      <Trash2 size={16} />
+                    <button onClick={() => deleteApiKey(name)} className="text-red-500 hover:text-red-600" title="Delete this key">
+                      <Trash2 size={16}/>
                     </button>
                   </div>
                 </div>
@@ -104,13 +104,13 @@ export default function SettingsModal() {
                 <div key={name} className="flex items-center justify-between p-3 rounded-lg border border-gray-300 dark:border-gray-700">
                   <span className="font-medium">{name}</span>
                   <div className="flex gap-2">
-                    <button onClick={() => usePrompt(name)} className="text-blue-500 hover:text-blue-600">
+                    <button onClick={() => usePrompt(name)} className="text-purple-500 hover:text-purple-600" title="Use this prompt">
                       <CheckSquare size={16} />
                     </button>
-                    <button onClick={() => editPrompt(name)} className="text-purple-500 hover:text-purple-600">
+                    <button onClick={() => editPrompt(name)} className="text-blue-500 hover:text-blue-600" title="Edit this prompt">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => deletePrompt(name)} className="text-red-500 hover:text-red-600">
+                    <button onClick={() => deletePrompt(name)} className="text-red-500 hover:text-red-600" title="Delete this prompt">
                       <Trash2 size={16} />
                     </button>
                   </div>

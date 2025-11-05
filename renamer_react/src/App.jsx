@@ -12,7 +12,7 @@ import OnboardingModal from './components/OnboardingModal';
 export default function App() {
   return (
     <FileRenamerProvider>
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-[#f8fafc] to-[#e2e8f0] text-[#1e293b] dark:from-[#000000] dark:to-[#0a0a0a] dark:text-[#fafafa]">
         <Toast />
         <TopRibbon />
         <div className="max-w-7xl mx-auto p-4 lg:p-6">

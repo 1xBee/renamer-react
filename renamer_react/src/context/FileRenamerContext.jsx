@@ -11,7 +11,7 @@ export const useFileRenamer = () => {
 
 export const FileRenamerProvider = ({ children }) => {
   const isInitializedRef = useRef(false);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('light');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [folderName, setFolderName] = useState('');
@@ -58,7 +58,7 @@ export const FileRenamerProvider = ({ children }) => {
       
       if (storedRaw) {
         const data = JSON.parse(storedRaw);
-        setTheme(data.theme || 'dark');
+        setTheme(data.theme || 'light');
         setApiKeys(data.apiKeys || {});
         setPrompts(data.prompts && Object.keys(data.prompts).length ? data.prompts : defaultPrompts);
         
@@ -267,11 +267,70 @@ export const FileRenamerProvider = ({ children }) => {
     }
   };
 
+  const processSingleFile = async (file) => {
+    if (!config.selectedApiKey) {
+      showNotification('Please select an API key', 'warning');
+      return;
+    }
+    if (!config.customPrompt.trim()) {
+      showNotification('Please enter a prompt', 'warning');
+      return;
+    }
+
+    showNotification('Processing file...', 'info');
+    await processFile(file);
+    
+    const updatedFile = files.find(f => f.name === file.name);
+    if (updatedFile?.status === 'failed') {
+      showNotification('Processing failed', 'error');
+    } else {
+      showNotification('File processed successfully!', 'success');
+    }
+  };
+
+  const renameSingleFile = async (file) => {
+    if (file.status !== 'processed') {
+      showNotification('File must be processed first', 'warning');
+      return;
+    }
+
+    try {
+      const permission = await directoryHandle.requestPermission({ mode: 'readwrite' });
+      if (permission !== 'granted') {
+        showNotification('Write permission denied', 'error');
+        return;
+      }
+
+      const handle = await directoryHandle.getFileHandle(file.name);
+      await handle.move(file.newName);
+      showNotification(`Successfully renamed to ${file.newName}!`, 'success');
+      await loadFiles(directoryHandle);
+    } catch (error) {
+      setFiles(prev => prev.map(f => f.name === file.name ? { ...f, status: 'failed', error: 'Rename failed' } : f));
+      showNotification('Failed to rename file: ' + error.message, 'error');
+    }
+  };
+
+  const removeFile = (fileName) => {
+    setFiles(prev => prev.filter(f => f.name !== fileName));
+    showNotification('File removed from list', 'info');
+  };
+
+  const updateFileName = (fileName, newName) => {
+    setFiles(prev => prev.map(f => 
+      f.name === fileName 
+        ? { ...f, newName, status: 'processed' } 
+        : f
+    ));
+    showNotification('Filename updated', 'success');
+  };
+
   const value = {
     theme, setTheme, mobileMenuOpen, setMobileMenuOpen, settingsOpen, setSettingsOpen,
     folderName, files, setFiles, isProcessing, config, setConfig, apiKeys, setApiKeys,
     prompts, setPrompts, stats, notification, confirmDialog, setConfirmDialog,
-    onboarding, setOnboarding, showNotification, selectFolder, processFiles, renameFiles, directoryHandle
+    onboarding, setOnboarding, showNotification, selectFolder, processFiles, renameFiles, directoryHandle,
+    processSingleFile, renameSingleFile, removeFile, updateFileName
   };
 
   return <FileRenamerContext.Provider value={value}>{children}</FileRenamerContext.Provider>;
