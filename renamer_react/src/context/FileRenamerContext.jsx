@@ -1,5 +1,8 @@
 // ===== context/FileRenamerContext.jsx =====
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '../stores/authStore';
+import { userSettingsAPI, apiKeysAPI, promptsAPI } from '../services/api';
 
 const FileRenamerContext = createContext();
 
@@ -10,7 +13,9 @@ export const useFileRenamer = () => {
 };
 
 export const FileRenamerProvider = ({ children }) => {
-  const isInitializedRef = useRef(false);
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+  
   const [theme, setTheme] = useState('light');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -26,11 +31,117 @@ export const FileRenamerProvider = ({ children }) => {
     customPrompt: ''
   });
   
-  const [apiKeys, setApiKeys] = useState({});
-  const [prompts, setPrompts] = useState({});
   const [notification, setNotification] = useState({ visible: false, message: '', type: 'info' });
   const [confirmDialog, setConfirmDialog] = useState({ visible: false, message: '', callback: null });
   const [onboarding, setOnboarding] = useState({ visible: false, currentStep: 0 });
+
+  // ===== React Query: Fetch User Settings =====
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', user?.id],
+    queryFn: () => userSettingsAPI.get(user.id),
+    enabled: !!user,
+  });
+
+  // ===== React Query: Fetch API Keys =====
+  const { data: apiKeysData = [] } = useQuery({
+    queryKey: ['apiKeys', user?.id],
+    queryFn: () => apiKeysAPI.getAll(user.id),
+    enabled: !!user,
+  });
+
+  // ===== React Query: Fetch Prompts =====
+  const { data: promptsData = [] } = useQuery({
+    queryKey: ['prompts', user?.id],
+    queryFn: () => promptsAPI.getAll(user.id),
+    enabled: !!user,
+  });
+
+  // Convert API keys array to object format
+  const apiKeys = apiKeysData.reduce((acc, key) => {
+    acc[key.key_name] = key.key_value;
+    return acc;
+  }, {});
+
+  // Convert prompts array to object format
+  const prompts = promptsData.reduce((acc, prompt) => {
+    acc[prompt.prompt_name] = prompt.prompt_text;
+    return acc;
+  }, {});
+
+  // ===== Mutations =====
+  const settingsMutation = useMutation({
+    mutationFn: (settings) => userSettingsAPI.upsert(user.id, settings),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['userSettings', user?.id]);
+    },
+  });
+
+  const addApiKeyMutation = useMutation({
+    mutationFn: ({ name, value }) => apiKeysAPI.create(user.id, name, value),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['apiKeys', user?.id]);
+      showNotification('API key saved', 'success');
+    },
+  });
+
+  const deleteApiKeyMutation = useMutation({
+    mutationFn: (keyId) => apiKeysAPI.delete(keyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['apiKeys', user?.id]);
+      showNotification('API key deleted', 'info');
+    },
+  });
+
+  const addPromptMutation = useMutation({
+    mutationFn: ({ name, value }) => promptsAPI.create(user.id, name, value),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['prompts', user?.id]);
+      showNotification('Prompt saved', 'success');
+    },
+  });
+
+  const deletePromptMutation = useMutation({
+    mutationFn: (promptId) => promptsAPI.delete(promptId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['prompts', user?.id]);
+      showNotification('Prompt deleted', 'info');
+    },
+  });
+
+  // ===== Load user settings into state =====
+  useEffect(() => {
+    if (userSettings) {
+      setTheme(userSettings.theme || 'light');
+      setConfig({
+        selectedModel: userSettings.selected_model || 'gemini-2.0-flash-exp',
+        selectedApiKey: userSettings.selected_api_key || '',
+        selectedPrompt: userSettings.selected_prompt || '',
+        customPrompt: userSettings.custom_prompt || '',
+      });
+    }
+  }, [userSettings]);
+
+  // ===== Save settings when they change =====
+  useEffect(() => {
+    if (user) {
+      const saveSettings = async () => {
+        await settingsMutation.mutateAsync({
+          theme,
+          selectedModel: config.selectedModel,
+          selectedApiKey: config.selectedApiKey,
+          selectedPrompt: config.selectedPrompt,
+          customPrompt: config.customPrompt,
+        });
+      };
+      
+      const debounce = setTimeout(saveSettings, 500);
+      return () => clearTimeout(debounce);
+    }
+  }, [theme, config, user]);
+
+  useEffect(() => {
+    document.body.className = theme;
+  }, [theme]);
 
   const stats = {
     total: files.length,
@@ -38,72 +149,6 @@ export const FileRenamerProvider = ({ children }) => {
     pending: files.filter(f => f.status === 'pending').length,
     failed: files.filter(f => f.status === 'failed').length
   };
-
-  useEffect(() => {
-    document.body.className = theme;
-  }, [theme]);
-
-  useEffect(() => {
-    const defaultPrompts = {
-      'Invoice Renamer': 'Extract the invoice number and date from this document. Format the filename as: INV[NUMBER]_[YYYYMMDD]',
-      'Receipt Organizer': 'Find the store name and purchase date. Format as: [STORE]_[YYYYMMDD]',
-      'Delivery Tracker': 'Locate the delivery number and date. Format as: [YYYYMMDD]_delivery_[NUMBER]',
-      'Contract Documents': 'Extract client/company name and contract date. Format as: Contract_[NAME]_[YYYYMMDD]',
-      'Medical Records': 'Find patient name and document date. Format as: [LASTNAME]_[FIRSTNAME]_[YYYYMMDD]'
-    };
-
-    try {
-      const storedRaw = localStorage.getItem('aiFileRenamerPro');
-      // console.log('[FileRenamer] LOADING from localStorage:', storedRaw);
-      
-      if (storedRaw) {
-        const data = JSON.parse(storedRaw);
-        setTheme(data.theme || 'light');
-        setApiKeys(data.apiKeys || {});
-        setPrompts(data.prompts && Object.keys(data.prompts).length ? data.prompts : defaultPrompts);
-        
-        // Update entire config object at once
-        setConfig(prev => ({
-          selectedModel: data.selectedModel || 'gemini-2.0-flash-exp',
-          selectedApiKey: data.selectedApiKey || '',
-          selectedPrompt: data.selectedPrompt || '',
-          customPrompt: data.customPrompt || ''
-        }));
-      } else {
-        setPrompts(defaultPrompts);
-      }
-    } catch (err) {
-      console.error('[FileRenamer] Error loading:', err);
-      setPrompts(defaultPrompts);
-    }
-
-    // Mark as initialized AFTER state updates
-    setTimeout(() => {
-      isInitializedRef.current = true;
-      // console.log('[FileRenamer] Initialization complete');
-    }, 0);
-  }, []);
-
-  // Update the save effect:
-  useEffect(() => {
-    if (!isInitializedRef.current) {
-      // console.log('[FileRenamer] Skipping save - not initialized');
-      return;
-    }
-
-    const data = {
-      theme,
-      apiKeys,
-      prompts,
-      selectedModel: config.selectedModel,
-      selectedApiKey: config.selectedApiKey,
-      selectedPrompt: config.selectedPrompt,
-      customPrompt: config.customPrompt
-    };
-
-    // console.log('[FileRenamer] SAVING to localStorage:', data);
-    localStorage.setItem('aiFileRenamerPro', JSON.stringify(data));
-  }, [theme, apiKeys, prompts, config]); // Watch entire config object
 
   const showNotification = (message, type = 'info') => {
     setNotification({ visible: true, message, type });
@@ -325,12 +370,32 @@ export const FileRenamerProvider = ({ children }) => {
     showNotification('Filename updated', 'success');
   };
 
+  // Helper functions for Settings component
+  const addApiKey = async (name, value) => {
+    await addApiKeyMutation.mutateAsync({ name, value });
+  };
+
+  const deleteApiKey = async (name) => {
+    const key = apiKeysData.find(k => k.key_name === name);
+    if (key) await deleteApiKeyMutation.mutateAsync(key.id);
+  };
+
+  const addPrompt = async (name, value) => {
+    await addPromptMutation.mutateAsync({ name, value });
+  };
+
+  const deletePrompt = async (name) => {
+    const prompt = promptsData.find(p => p.prompt_name === name);
+    if (prompt) await deletePromptMutation.mutateAsync(prompt.id);
+  };
+
   const value = {
     theme, setTheme, mobileMenuOpen, setMobileMenuOpen, settingsOpen, setSettingsOpen,
-    folderName, files, setFiles, isProcessing, config, setConfig, apiKeys, setApiKeys,
-    prompts, setPrompts, stats, notification, confirmDialog, setConfirmDialog,
+    folderName, files, setFiles, isProcessing, config, setConfig, 
+    apiKeys, prompts, stats, notification, confirmDialog, setConfirmDialog,
     onboarding, setOnboarding, showNotification, selectFolder, processFiles, renameFiles, directoryHandle,
-    processSingleFile, renameSingleFile, removeFile, updateFileName
+    processSingleFile, renameSingleFile, removeFile, updateFileName,
+    addApiKey, deleteApiKey, addPrompt, deletePrompt, apiKeysData, promptsData
   };
 
   return <FileRenamerContext.Provider value={value}>{children}</FileRenamerContext.Provider>;

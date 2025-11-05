@@ -4,44 +4,51 @@ import { Settings, Key, Edit3, Plus, Edit2, Trash2, CheckSquare } from 'lucide-r
 import { useFileRenamer } from '../context/FileRenamerContext';
 
 export default function SettingsModal() {
-  const { settingsOpen, setSettingsOpen, apiKeys, setApiKeys, prompts, setPrompts, showNotification, config, setConfig } = useFileRenamer();
+  const { 
+    settingsOpen, 
+    setSettingsOpen, 
+    apiKeys, 
+    prompts, 
+    showNotification, 
+    config, 
+    setConfig,
+    addApiKey,
+    deleteApiKey,
+    addPrompt,
+    deletePrompt,
+    apiKeysData,
+    promptsData
+  } = useFileRenamer();
+  
   const [newApiKey, setNewApiKey] = useState({ name: '', value: '' });
   const [newPrompt, setNewPrompt] = useState({ name: '', value: '' });
 
   if (!settingsOpen) return null;
 
-  const addApiKey = () => {
+  const handleAddApiKey = async () => {
     if (newApiKey.name && newApiKey.value) {
-      setApiKeys(prev => ({ ...prev, [newApiKey.name]: newApiKey.value }));
-      showNotification(`API key "${newApiKey.name}" saved`, 'success');
+      await addApiKey(newApiKey.name, newApiKey.value);
       setNewApiKey({ name: '', value: '' });
     }
   };
 
-  const deleteApiKey = (name) => {
-    const updated = { ...apiKeys };
-    delete updated[name];
-    setApiKeys(updated);
-    showNotification(`API key "${name}" deleted`, 'info');
+  const handleDeleteApiKey = async (name) => {
+    await deleteApiKey(name);
   };
 
   const editApiKey = (name) => {
     setNewApiKey({ name, value: apiKeys[name] });
   };
 
-  const addPrompt = () => {
+  const handleAddPrompt = async () => {
     if (newPrompt.name && newPrompt.value) {
-      setPrompts(prev => ({ ...prev, [newPrompt.name]: newPrompt.value }));
-      showNotification(`Prompt "${newPrompt.name}" saved`, 'success');
+      await addPrompt(newPrompt.name, newPrompt.value);
       setNewPrompt({ name: '', value: '' });
     }
   };
 
-  const deletePrompt = (name) => {
-    const updated = { ...prompts };
-    delete updated[name];
-    setPrompts(updated);
-    showNotification(`Prompt "${name}" deleted`, 'info');
+  const handleDeletePrompt = async (name) => {
+    await deletePrompt(name);
   };
 
   const editPrompt = (name) => {
@@ -78,7 +85,7 @@ export default function SettingsModal() {
                     <button onClick={() => editApiKey(name)} className="text-blue-500 hover:text-blue-600" title="Edit this key">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => deleteApiKey(name)} className="text-red-500 hover:text-red-600" title="Delete this key">
+                    <button onClick={() => handleDeleteApiKey(name)} className="text-red-500 hover:text-red-600" title="Delete this key">
                       <Trash2 size={16}/>
                     </button>
                   </div>
@@ -88,7 +95,7 @@ export default function SettingsModal() {
             <div className="flex gap-2 flex-col sm:flex-row">
               <input value={newApiKey.name} onChange={(e) => setNewApiKey(prev => ({ ...prev, name: e.target.value }))} type="text" placeholder="Key name..." className="flex-1 px-3 py-2 rounded-lg border bg-white dark:bg-black border-gray-300 dark:border-gray-700 dark:text-white" />
               <input value={newApiKey.value} onChange={(e) => setNewApiKey(prev => ({ ...prev, value: e.target.value }))} type="password" placeholder="API key..." className="flex-1 px-3 py-2 rounded-lg border bg-white dark:bg-black border-gray-300 dark:border-gray-700 dark:text-white" />
-              <button onClick={addApiKey} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+              <button onClick={handleAddApiKey} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
                 <Plus size={20} />
               </button>
             </div>
@@ -110,7 +117,7 @@ export default function SettingsModal() {
                     <button onClick={() => editPrompt(name)} className="text-blue-500 hover:text-blue-600" title="Edit this prompt">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => deletePrompt(name)} className="text-red-500 hover:text-red-600" title="Delete this prompt">
+                    <button onClick={() => handleDeletePrompt(name)} className="text-red-500 hover:text-red-600" title="Delete this prompt">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -120,7 +127,7 @@ export default function SettingsModal() {
             <div className="space-y-2">
               <input value={newPrompt.name} onChange={(e) => setNewPrompt(prev => ({ ...prev, name: e.target.value }))} type="text" placeholder="Prompt name..." className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-black border-gray-300 dark:border-gray-700 dark:text-white" />
               <textarea value={newPrompt.value} onChange={(e) => setNewPrompt(prev => ({ ...prev, value: e.target.value }))} rows="4" placeholder="Prompt text..." className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-black border-gray-300 dark:border-gray-700 dark:text-white resize-none" />
-              <button onClick={addPrompt} className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center justify-center gap-2">
+              <button onClick={handleAddPrompt} className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center justify-center gap-2">
                 <Plus size={20} />
                 Add Prompt
               </button>
