@@ -3,6 +3,14 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 import { userSettingsAPI, apiKeysAPI, promptsAPI } from '../services/api';
+import {
+  safeRenameFile,
+  loadFilesFromDirectory,
+  fileToBase64,
+  getMimeType,
+  getFileExtension,
+  ensureExtension
+} from '../services/fileSystemService';
 
 const FileRenamerContext = createContext();
 
@@ -170,25 +178,12 @@ export const FileRenamerProvider = ({ children }) => {
   };
 
   const loadFiles = async (handle) => {
-    const supportedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'txt', 'doc', 'docx'];
-    const newFiles = [];
-    
-    for await (const entry of handle.values()) {
-      if (entry.kind === 'file') {
-        const ext = entry.name.split('.').pop().toLowerCase();
-        if (supportedExtensions.includes(ext)) {
-          newFiles.push({
-            handle: entry,
-            name: entry.name,
-            newName: '',
-            status: 'pending',
-            selected: true,
-            error: ''
-          });
-        }
-      }
+    try {
+      const newFiles = await loadFilesFromDirectory(handle);
+      setFiles(newFiles);
+    } catch (error) {
+      showNotification('Failed to load files', 'error');
     }
-    setFiles(newFiles);
   };
 
   const processFiles = async () => {
@@ -235,15 +230,11 @@ export const FileRenamerProvider = ({ children }) => {
   const callAI = async (file, prompt, apiKey, model) => {
     const fileHandle = await directoryHandle.getFileHandle(file.name);
     const fileObject = await fileHandle.getFile();
-    const ext = file.name.split('.').pop().toLowerCase();
+    const ext = getFileExtension(file.name);
     
     const fullPrompt = prompt + "\n\nDo not include any explanation, only return the filename without extension.";
     const base64Data = await fileToBase64(fileObject);
-    
-    let mimeType = 'text/plain';
-    if (ext === 'pdf') mimeType = 'application/pdf';
-    else if (['jpg', 'jpeg'].includes(ext)) mimeType = 'image/jpeg';
-    else if (ext === 'png') mimeType = 'image/png';
+    const mimeType = getMimeType(ext);
     
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
@@ -268,40 +259,26 @@ export const FileRenamerProvider = ({ children }) => {
     let newName = data.candidates[0].content.parts[0].text.trim();
     newName = newName.replace(/```/g, '').replace(/\n/g, '').trim();
     
-    if (!newName.endsWith(`.${ext}`)) {
-      newName = `${newName}.${ext}`;
-    }
+    // Ensure the filename has the correct extension
+    newName = ensureExtension(newName, ext);
     
     return newName;
   };
 
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
   const renameFiles = async () => {
     try {
-      const permission = await directoryHandle.requestPermission({ mode: 'readwrite' });
-      if (permission !== 'granted') {
-        showNotification('Write permission denied', 'error');
-        return;
-      }
-
       const processedFiles = files.filter(f => f.status === 'processed');
       let successCount = 0;
 
       for (const file of processedFiles) {
         try {
-          const handle = await directoryHandle.getFileHandle(file.name);
-          await handle.move(file.newName);
+          await safeRenameFile(directoryHandle, file.name, file.newName);
           successCount++;
         } catch (error) {
-          setFiles(prev => prev.map(f => f.name === file.name ? { ...f, status: 'failed', error: 'Rename failed' } : f));
+          setFiles(prev => prev.map(f => 
+            f.name === file.name ? 
+            { ...f, status: 'failed', error: error.message } : f
+          ));
         }
       }
 
@@ -340,18 +317,14 @@ export const FileRenamerProvider = ({ children }) => {
     }
 
     try {
-      const permission = await directoryHandle.requestPermission({ mode: 'readwrite' });
-      if (permission !== 'granted') {
-        showNotification('Write permission denied', 'error');
-        return;
-      }
-
-      const handle = await directoryHandle.getFileHandle(file.name);
-      await handle.move(file.newName);
+      await safeRenameFile(directoryHandle, file.name, file.newName);
       showNotification(`Successfully renamed to ${file.newName}!`, 'success');
       await loadFiles(directoryHandle);
     } catch (error) {
-      setFiles(prev => prev.map(f => f.name === file.name ? { ...f, status: 'failed', error: 'Rename failed' } : f));
+      setFiles(prev => prev.map(f => 
+        f.name === file.name ? 
+        { ...f, status: 'failed', error: error.message } : f
+      ));
       showNotification('Failed to rename file: ' + error.message, 'error');
     }
   };
