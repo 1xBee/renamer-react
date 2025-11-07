@@ -6,11 +6,8 @@ import { userSettingsAPI, apiKeysAPI, promptsAPI } from '../services/api';
 import {
   safeRenameFile,
   loadFilesFromDirectory,
-  fileToBase64,
-  getMimeType,
-  getFileExtension,
-  ensureExtension
 } from '../services/fileSystemService';
+import { generateFileName } from '../services/aiService';
 
 const FileRenamerContext = createContext();
 
@@ -33,7 +30,7 @@ export const FileRenamerProvider = ({ children }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   
   const [config, setConfig] = useState({
-    selectedModel: 'gemini-2.0-flash-exp',
+    selectedModel: 'gemini-2.0-flash-lite',
     selectedApiKey: '',
     selectedPrompt: '',
     customPrompt: ''
@@ -121,7 +118,7 @@ export const FileRenamerProvider = ({ children }) => {
     if (userSettings) {
       setTheme(userSettings.theme || 'light');
       setConfig({
-        selectedModel: userSettings.selected_model || 'gemini-2.0-flash-exp',
+        selectedModel: userSettings.selected_model || 'gemini-2.0-flash-lite',
         selectedApiKey: userSettings.selected_api_key || '',
         selectedPrompt: userSettings.selected_prompt || '',
         customPrompt: userSettings.custom_prompt || '',
@@ -219,50 +216,36 @@ export const FileRenamerProvider = ({ children }) => {
     setFiles(prev => prev.map(f => f.name === file.name ? { ...f, status: 'processing' } : f));
 
     try {
+      const fileHandle = await directoryHandle.getFileHandle(file.name);
+      const fileObject = await fileHandle.getFile();
       const apiKey = apiKeys[config.selectedApiKey];
-      const newName = await callAI(file, config.customPrompt, apiKey, config.selectedModel);
-      setFiles(prev => prev.map(f => f.name === file.name ? { ...f, newName, status: 'processed' } : f));
+      
+      const result = await generateFileName(
+        fileObject,
+        file.name,
+        config.customPrompt,
+        apiKey,
+        config.selectedModel
+      );
+      
+      setFiles(prev => prev.map(f => 
+        f.name === file.name 
+          ? { 
+              ...f, 
+              newName: result.newName,
+              reasoning: result.reasoning,
+              rating: result.rating,
+              status: 'processed' 
+            } 
+          : f
+      ));
     } catch (error) {
-      setFiles(prev => prev.map(f => f.name === file.name ? { ...f, newName: error.message, status: 'failed' } : f));
+      setFiles(prev => prev.map(f => 
+        f.name === file.name 
+          ? { ...f, newName: error.message, status: 'failed' } 
+          : f
+      ));
     }
-  };
-
-  const callAI = async (file, prompt, apiKey, model) => {
-    const fileHandle = await directoryHandle.getFileHandle(file.name);
-    const fileObject = await fileHandle.getFile();
-    const ext = getFileExtension(file.name);
-    
-    const fullPrompt = prompt + "\n\nDo not include any explanation, only return the filename without extension.";
-    const base64Data = await fileToBase64(fileObject);
-    const mimeType = getMimeType(ext);
-    
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: fullPrompt },
-            { inline_data: { mime_type: mimeType, data: base64Data } }
-          ]
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || response.statusText);
-    }
-
-    const data = await response.json();
-    let newName = data.candidates[0].content.parts[0].text.trim();
-    newName = newName.replace(/```/g, '').replace(/\n/g, '').trim();
-    
-    // Ensure the filename has the correct extension
-    newName = ensureExtension(newName, ext);
-    
-    return newName;
   };
 
   const renameFiles = async () => {

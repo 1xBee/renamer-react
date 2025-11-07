@@ -18,9 +18,10 @@ export default function AIConfig() {
         <div>
           <label className="block text-sm opacity-70 mb-2">AI Model</label>
           <select value={config.selectedModel} onChange={(e) => setConfig(prev => ({ ...prev, selectedModel: e.target.value }))} className="w-full px-3 py-2 rounded-lg border bg-white dark:bg-black border-gray-300 dark:border-gray-700 dark:text-white">
-            <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash ⚡</option>
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash 💰</option>
-            <option value="gemini-1.5-pro">Gemini 1.5 Pro 🎯</option>
+            <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
+            <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
           </select>
         </div>
 
